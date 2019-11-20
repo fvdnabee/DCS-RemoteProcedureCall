@@ -1,14 +1,19 @@
 local dcsrpc = {} -- DONT REMOVE!!!
 
 --[[
-   DCS Remote Procedure Call - v0.1
+   DCS Remote Procedure Call - v0.2
    
    Put this file in C:/Users/<YOUR USERNAME>/DCS/Scripts for 1.5 or C:/Users/<YOUR USERNAME>/DCS.openalpha/Scripts for 2.0
-   This script listens on a local UDP socket for RPC messages. 
+   This script listens on a local UDP socket for RPC messages and PING requests. 
    By sending UDP messages from an external program a simple RPC method is realised.    
+   The script sends responses to the client, using the same socket. 
+   
+   Following responses are sent:
+   - RPC messages are responsed with "RC|RESPONSE\n" where RC = 0 indicates succes and RC > 0 indicates a failure mode
+   - PING messages are responsed with "PONG\n"
 --]]
 
-dcsrpc.version = "0.1"
+dcsrpc.version = "0.2"
 
 dcsrpc.RECEIVE_PORT = 9501
 dcsrpc.SEND_PORT = 9502
