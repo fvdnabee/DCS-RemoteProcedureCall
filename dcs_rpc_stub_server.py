@@ -38,7 +38,7 @@ class DCSRPCStubServerProtocol:
             return_code = 0
             result = (f"DCS_SERVER_NAME,{DCS_SERVER_NAME},DCS_THEATHER,caucasus,"
                       "DCS_MISSION_NAME,through-the-inferno,DCS_REAL_TIME,22000,"
-                      "DCS_PLAYER_LIST,logion;slasse;F0X,DCS_VERSION:2.5.5.39384\n")
+                      "DCS_PLAYER_LIST,logion;slasse;F0X,DCS_VERSION,2.5.5.39384\n")
         else:
             return_code = 1
             result = "Unknown RPC request: {}\n".format(message[0:2])
