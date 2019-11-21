@@ -1,7 +1,7 @@
 local dcsrpc = {} -- DONT REMOVE!!!
 
 --[[
-   DCS Remote Procedure Call - v0.2
+   DCS Remote Procedure Call - v0.3
    
    Put this file in C:/Users/<YOUR USERNAME>/DCS/Scripts for 1.5 or C:/Users/<YOUR USERNAME>/DCS.openalpha/Scripts for 2.0
    This script listens on a local UDP socket for RPC messages and PING requests. 
@@ -13,10 +13,15 @@ local dcsrpc = {} -- DONT REMOVE!!!
    - PING messages are responsed with "PONG\n"
 --]]
 
-dcsrpc.version = "0.2"
+dcsrpc.version = "0.3"
 
+-- Static info about the DCS server instance:
+dcsrpc.DCS_SERVER_NAME = "DCS-server"
+dcsrpc.DCS_THEATHER = "caucasus"
+dcsrpc.DCS_VERSION = "2.5.5.39384"
 dcsrpc.RECEIVE_PORT = 9501
 dcsrpc.SEND_PORT = 9502
+
 
 package.path = package.path .. ";.\\LuaSocket\\?.lua;"
 package.cpath = package.cpath .. ";.\\LuaSocket\\?.dll;"
@@ -36,7 +41,6 @@ local _lastSent = 0;
 local _lastReceivedCheck = 0;
 
 dcsrpc.onSimulationFrame = function()
-
     local _now = DCS.getRealTime()
 
 	-- check every 1 second if we received a new message:
@@ -79,11 +83,12 @@ dcsrpc.onSimulationFrame = function()
 end
 
 dcsrpc.handleRPC = function(_received)
-	-- Hanlders in this function should return two values: returncode and a response. 
+	-- Handlers in this function should return two values: returncode and a response. 
 	-- A 0 return code indicates succes, non-zero return codes are used to signal different error states.
 	net.log("DCSRPC - received RPC call: ".._received)
 
-	if _received:sub(1,2) == "!N" then  -- send notification
+	method = _received:sub(1,2)
+	if method == "!N" then  -- send notification
 		local _notificationText = _received:sub(3, -2)  -- remove \n char, _notificationText should not contain any double quotes " as this will interfer with dostring_in below, TODO: check/enforce this
 		net.log("DCSRPC - Triggering outText: \"".._notificationText.."\"")
 
@@ -96,7 +101,53 @@ dcsrpc.handleRPC = function(_received)
 			net.log("DCSRPC - trigger.action.outText completed succesfully")
 			return 0, "OK"
 		end
+	elseif method == "!S" then  -- send notification
+		local dcsServerName = dcsrpc.getDCSServerName()
+		local dcsTheather = dcsrpc.getDCSTheather()
+		local dcsRealTime = DCS.getRealTime()
+		local dcsPlayerList = dcsrpc.getPlayerList()
+		local dcsVersion = dcsrpc.getDCSVersion()
+		
+		response = "DCS_SERVER_NAME,"..dcsServerName..",DCS_THEATHER,"..dcsTheather..",DCS_MISSION_NAME,through-the-inferno,DCS_REAL_TIME,"..dcsRealTime..",DCS_PLAYER_LIST,"..dcsPlayerList..",DCS_VERSION:"..dcsVersion.."\n"
+		return 0, response
+	else
+		response = "Unknown RPC request: "..method.."\n"
+		return 1, response
 	end
+end
+
+dcsrpc.getDCSServerName = function()
+	-- Returns the name of the running DCS server
+	-- TODO: get from scripting environment (or serverSettings.lua)
+	return dcsrpc.DCS_SERVER_NAME
+end
+
+dcsrpc.getDCSTheather = function()
+	-- Returns the name of the active theather
+	-- TODO: get from scripting environment
+	return dcsrpc.DCS_THEATHER
+end
+
+dcsrpc.getDCSVersion = function()
+	-- Returns the name of the active theather
+	-- TODO: get DCS version from the running system, maybe using the env variable?
+	return dcsrpc.DCS_VERSION
+end
+
+dcsrpc.getPlayerList = function()
+	-- Returns a semicolon separated list of player names currently connected to the server
+	-- TODO: move to separate lua script
+	ssvPlayerList = ""  -- semicolon separated values Player list
+	local playerList = net.get_player_list()
+	for playerIDIndex, playerID in pairs(playerList)
+	do 
+		local _playerDetails = net.get_player_info( playerID )
+		ssvPlayerList = ssvPlayerList .. _playerDetails.name .. ";"
+	end
+	ssvPlayerList = ssvPlayerList:sub(1, -2)  -- remove last semicolon
+	net.log("DCSRPC - getPlayerList(): "..ssvPlayerList)
+
+	return ssvPlayerList
 end
 
 DCS.setUserCallbacks(dcsrpc)
