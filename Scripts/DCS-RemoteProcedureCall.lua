@@ -1,7 +1,7 @@
 local dcsrpc = {} -- DONT REMOVE!!!
 
 --[[
-   DCS Remote Procedure Call - v0.4
+   DCS Remote Procedure Call - v0.5
    
    Put this file in C:/Users/<YOUR USERNAME>/DCS/Scripts for 1.5 or C:/Users/<YOUR USERNAME>/DCS.openalpha/Scripts for 2.0
    This script listens on a local UDP socket for RPC messages and PING requests. 
@@ -23,7 +23,7 @@ dcsrpc.SEND_PORT = 9502
 
 --------------------------------------------------------------------------------------------------------------------------------------
 -- Edit below this line at your own risk!
-dcsrpc.version = "0.4"
+dcsrpc.version = "0.5"
 
 package.path = package.path .. ";.\\LuaSocket\\?.lua;"
 package.cpath = package.cpath .. ";.\\LuaSocket\\?.dll;"
@@ -137,8 +137,9 @@ dcsrpc.handleRPC = function(_received)
 		local dcsRealTime = DCS.getRealTime()
 		local dcsPlayerList = dcsrpc.getPlayerList()
 		local dcsVersion = dcsrpc.getDCSVersion()
+		local notificationEpochTime = os.time(os.date('*t'))
 		
-		response = "DCS_SERVER_NAME,"..dcsServerName..",DCS_THEATHER,"..dcsTheather..",DCS_MISSION_NAME,"..dcsMission..",DCS_REAL_TIME,"..dcsRealTime..",DCS_PLAYER_LIST,"..dcsPlayerList..",DCS_VERSION,"..dcsVersion.."\n"
+		response = "DCS_SERVER_NAME,"..dcsServerName..",DCS_THEATHER,"..dcsTheather..",DCS_MISSION_NAME,"..dcsMission..",DCS_REAL_TIME,"..dcsRealTime..",DCS_PLAYER_LIST,"..dcsPlayerList..",DCS_VERSION,"..dcsVersion..",NOTIFICATION_EPOCH_TIME,"..notificationEpochTime.."\n"
 		return 0, response
 	else
 		response = "Unknown RPC request: "..method.."\n"
