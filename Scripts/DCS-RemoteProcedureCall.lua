@@ -108,7 +108,7 @@ dcsrpc.handleRPC = function(_received)
 		local dcsPlayerList = dcsrpc.getPlayerList()
 		local dcsVersion = dcsrpc.getDCSVersion()
 		
-		response = "DCS_SERVER_NAME,"..dcsServerName..",DCS_THEATHER,"..dcsTheather..",DCS_MISSION_NAME,through-the-inferno,DCS_REAL_TIME,"..dcsRealTime..",DCS_PLAYER_LIST,"..dcsPlayerList..",DCS_VERSION:"..dcsVersion.."\n"
+		response = "DCS_SERVER_NAME,"..dcsServerName..",DCS_THEATHER,"..dcsTheather..",DCS_MISSION_NAME,through-the-inferno,DCS_REAL_TIME,"..dcsRealTime..",DCS_PLAYER_LIST,"..dcsPlayerList..",DCS_VERSION,"..dcsVersion.."\n"
 		return 0, response
 	else
 		response = "Unknown RPC request: "..method.."\n"
