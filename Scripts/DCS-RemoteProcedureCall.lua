@@ -1,7 +1,7 @@
 local dcsrpc = {} -- DONT REMOVE!!!
 
 --[[
-   DCS Remote Procedure Call - v0.5
+   DCS Remote Procedure Call - v0.6
    
    Put this file in C:/Users/<YOUR USERNAME>/DCS/Scripts for 1.5 or C:/Users/<YOUR USERNAME>/DCS.openalpha/Scripts for 2.0
    This script listens on a local UDP socket for RPC messages and PING requests. 
@@ -17,19 +17,22 @@ local dcsrpc = {} -- DONT REMOVE!!!
 -- Static info about the DCS server instance (feel free to edit):
 dcsrpc.DCS_SERVER_NAME_OVERRIDE = nil  -- if different than nil, then this setting overwrites the server name from serverSettings.lua
 dcsrpc.DCS_THEATHER = "caucasus"  -- currently hardcoded, set to the theather of the server
-dcsrpc.DCS_VERSION = "2.5.5.39384"  -- currently hardcoded, set to the DCS runtime environment version of the server
+dcsrpc.DCS_VERSION_FALLBACK = "N/A"  -- fallback in case scripts fails to read dcs version from autoupdate.cfg
 dcsrpc.RECEIVE_PORT = 9501
 dcsrpc.SEND_PORT = 9502
 
 --------------------------------------------------------------------------------------------------------------------------------------
 -- Edit below this line at your own risk!
-dcsrpc.version = "0.5"
+dcsrpc.version = "0.6"
 
 package.path = package.path .. ";.\\LuaSocket\\?.lua;"
 package.cpath = package.cpath .. ";.\\LuaSocket\\?.dll;"
 
 local socket = require("socket")
 local Tools = require('tools')
+-- JSON reader
+local JSON = loadfile("Scripts\\JSON.lua")()
+dcsrpc.JSON = JSON
 
 -- Bind for listening to RPC commands
 dcsrpc.UDPReceiveSocket = socket.udp()
@@ -45,6 +48,7 @@ local _lastReceivedCheck = 0;
 
 -- Read cfg from serverSettings.lua
 dcsrpc.serverName = ""
+dcsrpc.dcsVersion = nil
 dcsrpc.serverSettingsConfig = nil
 dcsrpc.readServerSettings = false
 
@@ -55,6 +59,25 @@ dcsrpc.onSimulationStart = function()
 		if serverSettingsConfig then
 			dcsrpc.serverSettingsConfig = serverSettingsConfig.cfg
 		end
+	end
+
+	-- read DCS version from autoupdate.cfg or fall back to DCS_VERSION_FALLBACK
+	if not dcsrpc.dcsVersion then
+		dcsrpc.dcsVersion = dcsrpc.DCS_VERSION_FALLBACK
+
+		local file = io.open("autoupdate.cfg", "rb") -- r read mode and b binary mode
+		if file then
+			local content = file:read "*a" -- *a or *all reads the whole file
+			file:close()
+			local autoupdate = {}
+			autoupdate = dcsrpc.JSON:decode(content)
+			if autoupdate then
+				dcsrpc.dcsVersion = autoupdate.version
+			end
+		else
+			net.log("DCSRPC - error failed to read autoupdate.cfg")
+		end
+		net.log("DCSRPC - set DCS version to " .. dcsrpc.dcsVersion)
 	end
 
 	-- set serverName
@@ -166,9 +189,8 @@ dcsrpc.getDCSMissionName = function()
 end
 
 dcsrpc.getDCSVersion = function()
-	-- Returns the name of the active theather
-	-- TODO: get DCS version from the running system, maybe using the env variable?
-	return dcsrpc.DCS_VERSION
+	-- Returns the DCS version
+	return dcsrpc.dcsVersion
 end
 
 dcsrpc.getPlayerList = function()
@@ -188,4 +210,4 @@ end
 
 DCS.setUserCallbacks(dcsrpc)
 
-net.log("Loaded - DCS Remote Procedure Call v".. dcsrpc.version.. " by logion")
+net.log("DCSRPC - Loaded DCS Remote Procedure Call v".. dcsrpc.version.. " by logion")

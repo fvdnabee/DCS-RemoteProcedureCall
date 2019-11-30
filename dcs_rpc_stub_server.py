@@ -2,6 +2,7 @@
 """ A stub server for the DCS-RPC lua UDP server. Used to facilitate developing and testing """
 import argparse
 import asyncio
+import time
 
 DCS_SERVER_NAME = "server-caucusus"
 
@@ -36,9 +37,11 @@ class DCSRPCStubServerProtocol:
             return_code, result = (0, "OK\n")
         elif message[0:2] == "!S":  # reply with server status
             return_code = 0
+            notification_time = int(time.time())
             result = (f"DCS_SERVER_NAME,{DCS_SERVER_NAME},DCS_THEATHER,caucasus,"
                       "DCS_MISSION_NAME,through-the-inferno,DCS_REAL_TIME,22000,"
-                      "DCS_PLAYER_LIST,logion;slasse;F0X,DCS_VERSION,2.5.5.39384\n")
+                      "DCS_PLAYER_LIST,logion;slasse;F0X,DCS_VERSION,2.5.5.39384,"
+                      "NOTIFICATION_EPOCH_TIME,{notification_time}\n")
         else:
             return_code = 1
             result = "Unknown RPC request: {}\n".format(message[0:2])
